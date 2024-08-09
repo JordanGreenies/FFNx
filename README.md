@@ -2,7 +2,7 @@ Fork of [FFNx](https://github.com/julianxhokaxhiu/FFNx) to add TTS support to FF
 
 If you want to build this then check the instructions at [FFNx](https://github.com/julianxhokaxhiu/FFNx).
 
-Prerequisites
+Prerequisites:
 - A locally hosted TTS server, for example: [LocalAI](https://github.com/mudler/LocalAI)
 - Enough voice models for each character, all examples included in the release
 
