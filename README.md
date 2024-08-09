@@ -21,3 +21,5 @@ If you want to build this then check the instructions at [FFNx](https://github.c
 ## Notes:
 - If you have problems, enable trace_tts and check FFNx.log when dialogue occurs
 - The TTS voice clips are generated in real-time and are saved locally (FINAL FANTASY VIII/voice)
+- The TTS results are not always perfect, but it beats reading right?
+- I have only tested TTS with piper, clips are generated in around ~0.15s from a local server, other backends or AI generation might take longer which would result in a delay before the dialogue
