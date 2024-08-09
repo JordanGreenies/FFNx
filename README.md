@@ -18,7 +18,7 @@ If you want to build this then check the instructions at [FFNx](https://github.c
 
 ## Limitations:
 - SSL connections not implemented
-- Speaking actor names are extracted from the dialogue & might not always be accurate, in which case it it selects the Unknown voice model
+- Speaking actor names are extracted from the dialogue & might not always be accurate, in which case it selects the Unknown voice model
 
 ## Notes:
 - If you have problems, enable trace_tts and check FFNx.log when dialogue occurs
