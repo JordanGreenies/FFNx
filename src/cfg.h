@@ -51,7 +51,6 @@ extern std::string tts_path;
 extern std::string tts_backend;
 extern std::string tts_language;
 
-
 extern std::string tts_voice_squall;
 extern std::string tts_voice_zell;
 extern std::string tts_voice_irvine;
