@@ -25,6 +25,29 @@
 #define FFNX_CFG_FILE "FFNx.toml"
 
 // configuration variables with their default values
+
+bool tts_enabled;
+std::string tts_backend_ip;
+int tts_backend_port;
+std::string tts_path;
+std::string tts_backend;
+std::string tts_language;
+std::string tts_voice_squall;
+std::string tts_voice_zell;
+std::string tts_voice_irvine;
+std::string tts_voice_quistis;
+std::string tts_voice_rinoa ;
+std::string tts_voice_selphie;
+std::string tts_voice_seifer;
+std::string tts_voice_edea;
+std::string tts_voice_laguna;
+std::string tts_voice_kiros;
+std::string tts_voice_ward;
+std::string tts_voice_other;
+std::string tts_voice_headmaster;
+
+
+
 std::string mod_path;
 std::vector<std::string> mod_ext;
 long enable_ffmpeg_videos;
@@ -68,6 +91,8 @@ bool trace_vram;
 bool trace_lights;
 bool trace_opcodes;
 bool trace_voice;
+bool trace_tts;
+
 bool trace_ambient;
 bool trace_gamepad;
 bool trace_achievement;
@@ -186,6 +211,30 @@ void read_cfg()
 	}
 
 	// Read config values
+
+  tts_enabled = config["tts_enabled"].value_or(false);
+  tts_backend_ip = config["tts_backend_ip"].value_or("");
+  tts_backend_port = config["tts_backend_port"].value_or(25);
+  tts_path = config["tts_path"].value_or("");;
+  tts_backend = config["tts_backend"].value_or("");
+  tts_language = config["tts_language"].value_or("");
+
+  tts_voice_squall = config["tts_voice_squall"].value_or("");
+  tts_voice_zell = config["tts_voice_zell"].value_or("");
+  tts_voice_irvine = config["tts_voice_irvine"].value_or("");
+  tts_voice_quistis = config["tts_voice_quistis"].value_or("");
+  tts_voice_rinoa = config["tts_voice_rinoa"].value_or("");
+  tts_voice_selphie = config["tts_voice_selphie"].value_or("");
+  tts_voice_seifer = config["tts_voice_seifer"].value_or("");
+  tts_voice_edea = config["tts_voice_edea"].value_or("");
+  tts_voice_laguna = config["tts_voice_laguna"].value_or("");
+  tts_voice_kiros = config["tts_voice_kiros"].value_or("");
+  tts_voice_ward = config["tts_voice_ward"].value_or("");
+  tts_voice_other = config["tts_voice_other"].value_or("");
+  tts_voice_headmaster = config["tts_voice_headmaster"].value_or("");
+
+  
+
 	mod_path = config["mod_path"].value_or("");
 	mod_ext = get_string_or_array_of_strings(config["mod_ext"]);
 	enable_ffmpeg_videos = config["enable_ffmpeg_videos"].value_or(-1);
@@ -195,7 +244,7 @@ void read_cfg()
 	external_sfx_path = config["external_sfx_path"].value_or("");
 	external_sfx_ext = get_string_or_array_of_strings(config["external_sfx_ext"]);
 	external_sfx_always_centered = config["external_sfx_always_centered"].value_or(false);
-	use_external_music = config["use_external_music"].value_or(false);
+  use_external_music = config["use_external_music"].value_or(false);
 	external_music_resume = config["external_music_resume"].value_or(true);
 	external_music_sync = config["external_music_sync"].value_or(false);
 	external_music_path = config["external_music_path"].value_or("");
@@ -220,6 +269,7 @@ void read_cfg()
 	trace_movies = config["trace_movies"].value_or(false);
 	trace_music = config["trace_music"].value_or(false);
 	trace_sfx = config["trace_sfx"].value_or(false);
+  trace_tts = config["trace_tts"].value_or(false);
 	trace_fake_dx = config["trace_fake_dx"].value_or(false);
 	trace_direct = config["trace_direct"].value_or(false);
 	trace_files = config["trace_files"].value_or(false);

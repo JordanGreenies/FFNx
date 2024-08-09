@@ -152,7 +152,7 @@ bool NxAudioEngine::init()
 		ffnx_info("NxAudioEngine initialized: channels=%u,sample_rate=%u\n", _engine.getBackendChannels(), _engine.getBackendSamplerate());
 
 		// 100 -> LOG_LEVEL_ALL: https://github.com/vgmstream/vgmstream/blob/4cda04d02595b381dc8cf98ec39e771c80987d18/src/util/log.c#L20
-		if (trace_all || trace_ambient || trace_sfx || trace_music || trace_voice) vgm_log_set_callback(NULL, 100, 0, NxAudioEngineVgmstreamCallback);
+		if (trace_all || trace_ambient || trace_sfx || trace_music || trace_voice || trace_tts) vgm_log_set_callback(NULL, 100, 0, NxAudioEngineVgmstreamCallback);
 
 		loadConfig();
 
@@ -1046,6 +1046,8 @@ bool NxAudioEngine::canPlayVoice(const char* name)
 
 bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 {
+  printf("NxAudioEngine::playVoice \n");
+
 	char filename[MAX_PATH];
 
 	bool exists = false;

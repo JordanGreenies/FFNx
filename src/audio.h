@@ -153,7 +153,7 @@ public:
 		float volume;
 	};
 
-private:
+public:
 	enum NxAudioEngineLayer
 	{
 		NXAUDIOENGINE_SFX,
@@ -162,7 +162,7 @@ private:
 		NXAUDIOENGINE_AMBIENT,
 		NXAUDIOENGINE_MOVIE_AUDIO,
 	};
-
+private:
 	bool _engineInitialized = false;
 	SoLoud::Soloud _engine;
 	bool _openpsf_loaded = false;
@@ -218,8 +218,10 @@ private:
 
 	// MISC
 	// Returns false if the file does not exist
+public:
 	bool getFilenameFullPath(char *_out, const char* _key, NxAudioEngineLayer _type);
 
+private:
 	bool fileExists(const char* filename);
 
 	// CFG

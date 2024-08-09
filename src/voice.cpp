@@ -31,6 +31,12 @@
 #include <sstream>
 #include <queue>
 
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+
 enum class display_type
 {
 	NONE = 0,
@@ -152,27 +158,34 @@ void begin_voice(byte window_id = 0)
 	}
 }
 
+std::string get_voice_filename(char* field_name, byte window_id, byte dialog_id, byte page_count)
+{
+    char name[MAX_PATH];
+
+    char page = 'a' + page_count;
+    if (page > 'z') page = 'z';
+
+    sprintf(name, "%s/w%u_%u%c", field_name, window_id, dialog_id, page);
+
+    if (!nxAudioEngine.canPlayVoice(name))
+      sprintf(name, "%s/%u%c", field_name, dialog_id, page);
+
+    if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
+    {
+      sprintf(name, "%s/w%u_%u", field_name, window_id, dialog_id);
+
+      if (!nxAudioEngine.canPlayVoice(name))
+        sprintf(name, "%s/%u", field_name, dialog_id);
+    }
+
+    return std::string(name);
+}
+
 bool play_voice(char* field_name, byte window_id, byte dialog_id, byte page_count)
 {
-	char name[MAX_PATH];
+  std::string name = get_voice_filename(field_name, window_id, dialog_id, page_count);
 
-	char page = 'a' + page_count;
-	if (page > 'z') page = 'z';
-
-	sprintf(name, "%s/w%u_%u%c", field_name, window_id, dialog_id, page);
-
-	if (!nxAudioEngine.canPlayVoice(name))
-		sprintf(name, "%s/%u%c", field_name, dialog_id, page);
-
-	if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
-	{
-		sprintf(name, "%s/w%u_%u", field_name, window_id, dialog_id);
-
-		if (!nxAudioEngine.canPlayVoice(name))
-			sprintf(name, "%s/%u", field_name, dialog_id);
-	}
-
-	return nxAudioEngine.playVoice(name, window_id, voice_volume);
+	return nxAudioEngine.playVoice(name.c_str(), window_id, voice_volume);
 }
 
 bool play_battle_dialogue_voice(short enemy_id, std::string tokenized_dialogue)
@@ -616,6 +629,85 @@ std::string decode_ff7_text(const char *encoded_text)
 		}
 	}
 	return decoded_text;
+}
+
+bool isVoiced(std::string character, std::string& voiceModel)
+{
+  std::map<std::string, std::string> ff8_char_voices =
+  {
+    {"Squall", tts_voice_squall},
+    {"Zell", tts_voice_zell},
+    {"Irvine", tts_voice_irvine},
+    {"Quistis", tts_voice_quistis},
+    {"Rinoa", tts_voice_rinoa},
+    {"Selphie", tts_voice_selphie},
+    {"Seifer", tts_voice_seifer},
+    {"Edea", tts_voice_edea},
+    {"Laguna", tts_voice_laguna},
+    {"Kiros", tts_voice_kiros},
+    {"Ward", tts_voice_ward},
+    {"Headmaster", tts_voice_headmaster}
+  };
+
+  auto it = ff8_char_voices.find(character);
+  if (it != ff8_char_voices.end()) {
+    if (trace_tts) ffnx_trace("TTS: loaded voice model: %s (%s)\n", it->second.c_str(), character.c_str());
+
+    voiceModel = it->second;
+    return true;
+  }
+
+  if (trace_tts) ffnx_trace("TTS: %s not voiced\n", character.c_str());
+
+  voiceModel = tts_voice_other;
+  return false;
+}
+
+void split_dialogue(std::string decoded_text, std::string &name, std::string &message, std::string& voiceModel)
+{
+  bool gotName = false;
+  int skip = 0;
+  for (auto current_char : decoded_text)
+  {
+    if (skip > 0)
+    {
+      skip--;
+      continue;
+    }
+
+    if (current_char >= ' ' && current_char <= '}')
+    {
+      if (!gotName && current_char == ' ')
+      {
+        if (!isVoiced(name, voiceModel))
+        {
+          message += name;
+          message += current_char;
+          name = "Unknown";
+        }
+
+        if (name == "Headmaster")
+        {
+          skip = 5;
+        }
+
+        gotName = true;
+      }
+      else
+      {
+        if(current_char == '"') current_char = '\'';
+        else if (current_char == '.')
+        {
+          message += ", ";
+        }
+        else
+        {
+          if (!gotName) name += current_char;
+          else message += current_char;
+        }
+      }
+    }
+  }
 }
 
 std::string tokenize_text(std::string decoded_text)
@@ -1120,6 +1212,212 @@ int ff8_opcode_voice_aask(int unk)
 	return ff8_opcode_old_aask(unk);
 }
 
+
+class HttpClient {
+public:
+  HttpClient() {
+
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+      if (trace_tts) ffnx_trace("TTS: WSAStartup failed \n");
+      initialized = false;
+    }
+    else {
+      initialized = true;
+    }
+  }
+
+  ~HttpClient() {
+    if (initialized) {
+      WSACleanup();
+    }
+  }
+
+  bool post(const std::string& host, const int port, const std::string& path, const std::string& data, std::string& response) {
+    if (!initialized) return false;
+
+    SOCKET sock = createSocket();
+    if (sock == INVALID_SOCKET)
+    {
+      if (trace_tts) ffnx_trace("TTS: failed to create socket \n");
+      return false;
+    }
+
+    if (!connectToServer(sock, port, host)) {
+      if (trace_tts) ffnx_trace("TTS: failed to connect to %s:%i \n", host.c_str(), port);
+
+      closesocket(sock);
+      return false;
+    }
+
+    std::string request = createPostRequest(host, path, data);
+    if (send(sock, request.c_str(), request.length(), 0) < 0) {
+      if (trace_tts) ffnx_trace("TTS: failed to send data to TTS server \n");
+      closesocket(sock);
+      return false;
+    }
+
+    response = receiveResponse(sock);
+    closesocket(sock);
+    return true;
+  }
+
+private:
+  WSADATA wsaData;
+  bool initialized;
+
+  SOCKET createSocket() {
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    return sock;
+  }
+
+  bool connectToServer(SOCKET& sock, const int port, const std::string& host) {
+    struct hostent* he = gethostbyname(host.c_str());
+    if (he == nullptr) {
+      return false;
+    }
+
+    struct sockaddr_in server;
+    server.sin_addr.s_addr = *(unsigned long*)he->h_addr;
+    server.sin_family = AF_INET;
+    server.sin_port = htons(port);
+
+    if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  std::string createPostRequest(const std::string& host, const std::string& path, const std::string& data) {
+    return "POST " + path + " HTTP/1.1\r\n" +
+      "Host: " + host + "\r\n" +
+      "Content-Type: application/json\r\n" +
+      "accept: audio/x-wav\r\n" +
+      "Content-Length: " + std::to_string(data.length()) + "\r\n" +
+      "Connection: close\r\n\r\n" +
+      data;
+  }
+
+  std::string receiveResponse(SOCKET& sock) {
+    std::string response;
+    char buffer[4096];
+    int bytesReceived;
+
+    bool headerSkipped = false;
+    while ((bytesReceived = recv(sock, buffer, sizeof(buffer) - 1, 0)) > 0) {
+      buffer[bytesReceived] = '\0';
+
+      if (!headerSkipped) {
+        std::string tempBuffer(buffer, bytesReceived);
+        size_t headerEnd = tempBuffer.find("\r\n\r\n");
+
+        if (headerEnd != std::string::npos) {
+          headerSkipped = true;
+          response.append(tempBuffer.substr(headerEnd + 4));
+        }
+      }
+      else {
+        response.append(buffer, bytesReceived);
+      }
+    }
+
+    if (bytesReceived < 0) {
+      if (trace_tts) ffnx_trace("TTS: error getting response from TTS server \n");
+    }
+
+    if (trace_tts) ffnx_trace("TTS: response success, %i bytes \n", response.size());
+
+    return response;
+  }
+
+};
+
+
+bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
+{
+  std::string decoded_text = ff8_decode_text(text_data1);
+  std::string tokenized_dialogue = tokenize_text(decoded_text);
+
+  std::string tts_dialogue, tts_name, voice_model;
+  split_dialogue(decoded_text, tts_name, tts_dialogue, voice_model); //I couldnt find any solid way to get the speaker id
+  int dialog_id = current_opcode_message_status[window_id].message_dialog_id;
+
+  bool soundFileExists = false;
+  char folderfilename[MAX_PATH] = {};
+  std::string file_name;
+
+  switch (driver_mode)
+  {
+  case MODE_FIELD:
+    file_name = get_voice_filename((char*)current_opcode_message_status[window_id].field_name.c_str(), window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
+    soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, file_name.c_str(), NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+    break;
+  case MODE_BATTLE:
+  {
+    std::string actor_name = ff8_decode_text(ff8_battle_actor_name[LOBYTE(*ff8_externals.battle_current_actor_talking)]);
+    std::string tokenized_actor = tokenize_text(actor_name);
+    isVoiced(tokenized_actor, voice_model);
+
+    char voice_file[MAX_PATH];
+    sprintf(voice_file, "_battle/%s/%s", tokenized_actor.c_str(), tokenized_dialogue.c_str());
+    soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, voice_file, NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+    break;
+  }
+  case MODE_WORLDMAP:
+
+    if (dialog_id < 0)
+    {
+      char voice_file[MAX_PATH] = {};
+      sprintf(voice_file, "_world/text/%s", tokenized_dialogue.c_str());
+      soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, voice_file, NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+    }
+    else
+    {
+      file_name = get_voice_filename((char*)"_world", window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
+      soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, file_name.c_str(), NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+    }
+
+    break;
+  case FF8_MODE_TUTO:
+  {
+    char voice_file[MAX_PATH];
+    sprintf(voice_file, "_tuto/%04u/%s", *ff8_externals.current_tutorial_id, tokenized_dialogue.c_str());
+    soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, voice_file, NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+
+    break;
+  }
+  default:
+    return false;
+  }
+
+  if (trace_tts)
+  {
+    ffnx_trace("TTS: playing/creating %s \n", folderfilename);
+    ffnx_trace("TTS: tts_name %s \n", tts_name.c_str());
+    ffnx_trace("TTS: tts_dialogue %s \n", tts_dialogue.c_str());
+    ffnx_trace("TTS: decoded_text %s \n", decoded_text.c_str());
+
+    ffnx_trace("TTS: soundFileExists %i \n", soundFileExists);
+  }
+
+  if (!soundFileExists && !tts_dialogue.empty())
+  {
+    HttpClient client;
+    std::string response;
+    std::string payload = "{\"backend\": \"" + tts_backend + "\", \"input\" : \"" + tts_dialogue + "\", \"language\" : \"" + tts_language + "\", \"model\" : \"" + voice_model + "\"}";
+    if (trace_tts) ffnx_trace("TTS: request JSON, %s \n", payload.c_str());
+    client.post(tts_backend_ip.c_str(), tts_backend_port, tts_path.c_str(), payload.c_str(), response);
+    std::filesystem::create_directories(std::filesystem::path(folderfilename).parent_path());
+    std::fstream file;
+    file.open(folderfilename, std::ios::app | std::ios::binary);
+    file.write(response.c_str(), response.length());
+    file.close();
+    if (trace_tts) ffnx_trace("TTS: sound file created: %s (%ibytes) \n", folderfilename, response.length());
+  }
+
+  return true;
+}
+
 int ff8_show_dialog(int window_id, int state, int a3)
 {
 	struct game_mode *mode = getmode_cached();
@@ -1141,6 +1439,8 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
 	if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
 
+  if (tts_enabled && _is_dialog_opening) tts_create(win->text_data1, window_id, mode->driver_mode);
+
 	// Skip voice over on Tutorials
 	if (mode->driver_mode == MODE_FIELD)
 	{
@@ -1159,8 +1459,8 @@ int ff8_show_dialog(int window_id, int state, int a3)
 					ff8_field_window_stack_count[*common_externals.current_field_id] = 0;
 
 				ff8_field_window_stack_count[*common_externals.current_field_id]++;
-
 				if (ff8_field_window_stack_count[*common_externals.current_field_id] > 1) simulate_OK_disabled[window_id] = true;
+
 			}
 		}
 		else if (_is_dialog_starting || _is_dialog_paging)
@@ -1168,7 +1468,9 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			if (_is_dialog_starting) current_opcode_message_status[window_id].char_id = 0; // TODO
 			if (trace_all || trace_opcodes) ffnx_trace("[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u,char=%X\n", field_name.c_str(), window_id, dialog_id, current_opcode_message_status[window_id].message_page_count, current_opcode_message_status[window_id].char_id);
 			current_opcode_message_status[window_id].is_voice_acting = play_voice((char*)field_name.c_str(), window_id, current_opcode_message_status[window_id].message_dialog_id, current_opcode_message_status[window_id].message_page_count);
-		}
+
+
+    }
 		else if (_is_dialog_option_changed && _is_dialog_ask)
 		{
 			if (trace_all || trace_opcodes) ffnx_trace("[ASK]: field=%s,window_id=%u,dialog_id=%u,option_id=%u,char=%X\n", field_name.c_str(), window_id, dialog_id, opcode_ask_current_option,current_opcode_message_status[window_id].char_id);

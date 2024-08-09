@@ -43,6 +43,29 @@
 #define GAME_LIGHTING_PER_VERTEX 1
 #define GAME_LIGHTING_PER_PIXEL 2
 
+
+extern bool tts_enabled;
+extern std::string tts_backend_ip;
+extern int tts_backend_port;
+extern std::string tts_path;
+extern std::string tts_backend;
+extern std::string tts_language;
+
+
+extern std::string tts_voice_squall;
+extern std::string tts_voice_zell;
+extern std::string tts_voice_irvine;
+extern std::string tts_voice_quistis;
+extern std::string tts_voice_rinoa;
+extern std::string tts_voice_selphie;
+extern std::string tts_voice_seifer;
+extern std::string tts_voice_edea;
+extern std::string tts_voice_laguna;
+extern std::string tts_voice_kiros;
+extern std::string tts_voice_ward;
+extern std::string tts_voice_other;
+extern std::string tts_voice_headmaster;
+
 extern std::string mod_path;
 extern std::vector<std::string> mod_ext;
 extern long enable_ffmpeg_videos;
@@ -85,6 +108,8 @@ extern bool trace_vram;
 extern bool trace_lights;
 extern bool trace_opcodes;
 extern bool trace_voice;
+extern bool trace_tts;
+
 extern bool trace_ambient;
 extern bool trace_gamepad;
 extern bool trace_achievement;
