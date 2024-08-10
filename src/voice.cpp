@@ -738,6 +738,7 @@ void split_dialogue(std::string decoded_text, std::string& name, std::string& me
           {
             message += " ";
             message += ",";
+            message += current_char;
           }
         }
         else if (current_char == '.')
