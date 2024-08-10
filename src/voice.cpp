@@ -160,7 +160,7 @@ void begin_voice(byte window_id = 0)
 
 std::string get_voice_filename(char* field_name, byte window_id, byte dialog_id, byte page_count)
 {
-    char name[MAX_PATH];
+  char name[MAX_PATH] = {};
 
     char page = 'a' + page_count;
     if (page > 'z') page = 'z';
@@ -169,11 +169,9 @@ std::string get_voice_filename(char* field_name, byte window_id, byte dialog_id,
 
     if (!nxAudioEngine.canPlayVoice(name))
       sprintf(name, "%s/%u%c", field_name, dialog_id, page);
-
     if (!nxAudioEngine.canPlayVoice(name) && page_count == 0)
     {
       sprintf(name, "%s/w%u_%u", field_name, window_id, dialog_id);
-
       if (!nxAudioEngine.canPlayVoice(name))
         sprintf(name, "%s/%u", field_name, dialog_id);
     }
@@ -633,20 +631,27 @@ std::string decode_ff7_text(const char *encoded_text)
 
 bool isVoiced(std::string character, std::string& voiceModel)
 {
+  for (size_t i = 0; i < character.length(); ++i) {
+    if (character[i] == ' ') {
+      character.resize(i);
+    }
+  }
+
   std::map<std::string, std::string> ff8_char_voices =
   {
-    {"Squall", tts_voice_squall},
-    {"Zell", tts_voice_zell},
-    {"Irvine", tts_voice_irvine},
-    {"Quistis", tts_voice_quistis},
-    {"Rinoa", tts_voice_rinoa},
-    {"Selphie", tts_voice_selphie},
-    {"Seifer", tts_voice_seifer},
-    {"Edea", tts_voice_edea},
-    {"Laguna", tts_voice_laguna},
-    {"Kiros", tts_voice_kiros},
-    {"Ward", tts_voice_ward},
-    {"Headmaster", tts_voice_headmaster}
+    {"squall", tts_voice_squall},
+    {"zell", tts_voice_zell},
+    {"irvine", tts_voice_irvine},
+    {"quistis", tts_voice_quistis},
+    {"rinoa", tts_voice_rinoa},
+    {"selphie", tts_voice_selphie},
+    {"seifer", tts_voice_seifer},
+    {"edea", tts_voice_edea},
+    {"laguna", tts_voice_laguna},
+    {"kiros", tts_voice_kiros},
+    {"ward", tts_voice_ward },
+    {"gsoldier", tts_voice_ward },
+    {"headmaster", tts_voice_headmaster}
   };
 
   auto it = ff8_char_voices.find(character);
@@ -663,50 +668,103 @@ bool isVoiced(std::string character, std::string& voiceModel)
   return false;
 }
 
-void split_dialogue(std::string decoded_text, std::string &name, std::string &message, std::string& voiceModel)
+size_t getUtf8CharLength(unsigned char firstByte) {
+  if ((firstByte & 0x80) == 0) {
+    return 1; // ASCII character (1 byte)
+  }
+  else if ((firstByte & 0xE0) == 0xC0) {
+    return 2; // 2-byte UTF-8 character
+  }
+  else if ((firstByte & 0xF0) == 0xE0) {
+    return 3; // 3-byte UTF-8 character
+  }
+  else if ((firstByte & 0xF8) == 0xF0) {
+    return 4; // 4-byte UTF-8 character
+  }
+  return 0; // Invalid UTF-8 byte sequence
+}
+
+void split_dialogue(std::string decoded_text, std::string& name, std::string& message, std::string& voiceModel, std::string& unvoiced)
 {
+  transform(decoded_text.begin(), decoded_text.end(), decoded_text.begin(), tolower);
+  std::string utf8_start_quote = "“";
+  std::string utf8_end_quote = "”";
+
   bool gotName = false;
-  int skip = 0;
-  for (auto current_char : decoded_text)
+  unsigned char last_char = 0;
+  for (auto it = decoded_text.begin(); it != decoded_text.end(); )
   {
-    if (skip > 0)
-    {
-      skip--;
-      continue;
+    unsigned char current_char = static_cast<unsigned char>(*it);
+    size_t charLength = getUtf8CharLength(current_char);
+
+    if (charLength == 0 || std::distance(it, decoded_text.end()) < charLength) {
+      break;
     }
 
-    if (current_char >= ' ' && current_char <= '}')
+    std::string utf8Char(it, it + charLength);
+
+    if ((current_char >= ' ' && current_char <= '}') || (current_char == 0xe2 && charLength == 3))
     {
-      if (!gotName && current_char == ' ')
+
+      if (!gotName && current_char == 0xe2) //quote start
       {
-        if (!isVoiced(name, voiceModel))
+        if (name.empty())
         {
-          message += name;
-          message += current_char;
+          voiceModel = tts_voice_other;
           name = "Unknown";
         }
-
-        if (name == "Headmaster")
+        else
         {
-          skip = 5;
+          name.pop_back();
+          if (!isVoiced(name, voiceModel))
+          {
+            unvoiced = name;
+            name = "Unknown";
+          }
         }
 
         gotName = true;
       }
       else
       {
-        if(current_char == '"') current_char = '\'';
+        if (current_char == '"') current_char = '\'';
+        else if (last_char == '.' && current_char == '.')
+        {
+          if(gotName) message += " ";
+        }
+        else if (last_char == '.' && current_char != ' ' && charLength == 1)
+        {
+          if (gotName)
+          {
+            message += " ";
+            message += ",";
+          }
+        }
         else if (current_char == '.')
         {
-          message += ", ";
+          if (gotName) message += ",";
         }
-        else
+        else if (gotName && current_char == 0xe2) //quote end or next segment, add a space incase
+        {
+          if (gotName) message += " ";
+        }
+        else if (charLength == 1)
         {
           if (!gotName) name += current_char;
           else message += current_char;
         }
       }
     }
+
+    last_char = current_char;
+    std::advance(it, charLength);
+  }
+
+  if (message.empty())
+  {
+    message = name;
+    voiceModel = tts_voice_other;
+    name = "Unknown";
   }
 }
 
@@ -1338,8 +1396,8 @@ bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
   std::string decoded_text = ff8_decode_text(text_data1);
   std::string tokenized_dialogue = tokenize_text(decoded_text);
 
-  std::string tts_dialogue, tts_name, voice_model;
-  split_dialogue(decoded_text, tts_name, tts_dialogue, voice_model); //I couldnt find any solid way to get the speaker id
+  std::string tts_dialogue, tts_name, voice_model, unvoiced;
+  split_dialogue(decoded_text, tts_name, tts_dialogue, voice_model, unvoiced); //I couldnt find any solid way to get the speaker id
   int dialog_id = current_opcode_message_status[window_id].message_dialog_id;
 
   bool soundFileExists = false;
@@ -1358,7 +1416,7 @@ bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
     std::string tokenized_actor = tokenize_text(actor_name);
     isVoiced(tokenized_actor, voice_model);
 
-    char voice_file[MAX_PATH];
+    char voice_file[MAX_PATH] = {};
     sprintf(voice_file, "_battle/%s/%s", tokenized_actor.c_str(), tokenized_dialogue.c_str());
     soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, voice_file, NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
     break;
@@ -1380,7 +1438,7 @@ bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
     break;
   case FF8_MODE_TUTO:
   {
-    char voice_file[MAX_PATH];
+    char voice_file[MAX_PATH] = {};;
     sprintf(voice_file, "_tuto/%04u/%s", *ff8_externals.current_tutorial_id, tokenized_dialogue.c_str());
     soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, voice_file, NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 
@@ -1390,13 +1448,18 @@ bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
     return false;
   }
 
+  if (!tts_enable_unknown_voices && tts_name == "Unknown")
+  {
+    ffnx_trace("TTS: not voicing unknown character %s \n", unvoiced.c_str());
+    return false;
+  }
+
   if (trace_tts)
   {
     ffnx_trace("TTS: playing/creating %s \n", folderfilename);
     ffnx_trace("TTS: tts_name %s \n", tts_name.c_str());
     ffnx_trace("TTS: tts_dialogue %s \n", tts_dialogue.c_str());
     ffnx_trace("TTS: decoded_text %s \n", decoded_text.c_str());
-
     ffnx_trace("TTS: soundFileExists %i \n", soundFileExists);
   }
 
@@ -1437,9 +1500,11 @@ int ff8_show_dialog(int window_id, int state, int a3)
 	bool _is_dialog_closed = is_dialog_closed(current_opcode_message_status[window_id].message_last_transition, win->open_close_transition);
 	bool _is_dialog_ask = (message_kind == message_kind::ASK) || (message_kind == message_kind::DRAWPOINT);
 
-	if (_is_dialog_paging) current_opcode_message_status[window_id].message_page_count++;
 
-  if (tts_enabled && _is_dialog_opening) tts_create(win->text_data1, window_id, mode->driver_mode);
+  if (_is_dialog_paging)
+  {
+    current_opcode_message_status[window_id].message_page_count++;
+  }
 
 	// Skip voice over on Tutorials
 	if (mode->driver_mode == MODE_FIELD)
@@ -1452,7 +1517,10 @@ int ff8_show_dialog(int window_id, int state, int a3)
 			current_opcode_message_status[window_id].message_last_option = opcode_ask_current_option;
 			current_opcode_message_status[window_id].message_kind = message_kind;
 			current_opcode_message_status[window_id].field_name = field_name;
-			if (message_kind == message_kind::DRAWPOINT) current_opcode_message_status[window_id].message_page_count = message_page_count;
+      if (message_kind == message_kind::DRAWPOINT)
+      {
+        current_opcode_message_status[window_id].message_page_count = message_page_count;
+      }
 			if (message_kind == message_kind::MESSAGE)
 			{
 				if (ff8_field_window_stack_count.find(*common_externals.current_field_id) == ff8_field_window_stack_count.end())
@@ -1460,8 +1528,10 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
 				ff8_field_window_stack_count[*common_externals.current_field_id]++;
 				if (ff8_field_window_stack_count[*common_externals.current_field_id] > 1) simulate_OK_disabled[window_id] = true;
-
 			}
+
+      if (tts_enabled) tts_create(win->text_data1, window_id, mode->driver_mode);
+
 		}
 		else if (_is_dialog_starting || _is_dialog_paging)
 		{
@@ -1507,6 +1577,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
 		if (_is_dialog_opening)
 		{
+      if (tts_enabled) tts_create(win->text_data1, window_id, mode->driver_mode);
 			begin_voice(window_id);
 		}
 		else if (_is_dialog_starting || _has_dialog_text_changed)
@@ -1534,8 +1605,9 @@ int ff8_show_dialog(int window_id, int state, int a3)
 	{
 		if (_is_dialog_opening)
 		{
+      current_opcode_message_status[window_id].message_dialog_id = dialog_id;
+      if (tts_enabled) tts_create(win->text_data1, window_id, mode->driver_mode);
 			begin_voice(window_id);
-			current_opcode_message_status[window_id].message_dialog_id = dialog_id;
 		}
 		else if (_is_dialog_starting)
 		{
@@ -1568,6 +1640,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
 		if (_is_dialog_opening)
 		{
+      if (tts_enabled) tts_create(win->text_data1, window_id, mode->driver_mode);
 			begin_voice(window_id);
 		}
 		else if (_is_dialog_starting || _has_dialog_text_changed)

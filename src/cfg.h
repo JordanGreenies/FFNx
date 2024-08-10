@@ -45,6 +45,7 @@
 
 
 extern bool tts_enabled;
+extern bool tts_enable_unknown_voices;
 extern std::string tts_backend_ip;
 extern int tts_backend_port;
 extern std::string tts_path;

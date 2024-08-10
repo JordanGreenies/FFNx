@@ -27,6 +27,8 @@
 // configuration variables with their default values
 
 bool tts_enabled;
+bool tts_enable_unknown_voices;
+
 std::string tts_backend_ip;
 int tts_backend_port;
 std::string tts_path;
@@ -45,8 +47,6 @@ std::string tts_voice_kiros;
 std::string tts_voice_ward;
 std::string tts_voice_other;
 std::string tts_voice_headmaster;
-
-
 
 std::string mod_path;
 std::vector<std::string> mod_ext;
@@ -213,6 +213,8 @@ void read_cfg()
 	// Read config values
 
   tts_enabled = config["tts_enabled"].value_or(false);
+  tts_enable_unknown_voices = config["tts_enable_unknown_voices"].value_or(false);
+
   tts_backend_ip = config["tts_backend_ip"].value_or("");
   tts_backend_port = config["tts_backend_port"].value_or(25);
   tts_path = config["tts_path"].value_or("");;
