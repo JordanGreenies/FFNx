@@ -51,20 +51,11 @@ extern int tts_backend_port;
 extern std::string tts_path;
 extern std::string tts_backend;
 extern std::string tts_language;
+extern bool trace_unknown_voices;
 
-extern std::string tts_voice_squall;
-extern std::string tts_voice_zell;
-extern std::string tts_voice_irvine;
-extern std::string tts_voice_quistis;
-extern std::string tts_voice_rinoa;
-extern std::string tts_voice_selphie;
-extern std::string tts_voice_seifer;
-extern std::string tts_voice_edea;
-extern std::string tts_voice_laguna;
-extern std::string tts_voice_kiros;
-extern std::string tts_voice_ward;
 extern std::string tts_voice_other;
-extern std::string tts_voice_headmaster;
+extern std::vector<std::string> tts_voiced;
+extern std::vector<std::string> tts_voiced_models;
 
 extern std::string mod_path;
 extern std::vector<std::string> mod_ext;

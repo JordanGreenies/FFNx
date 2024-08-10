@@ -47,6 +47,10 @@ std::string tts_voice_kiros;
 std::string tts_voice_ward;
 std::string tts_voice_other;
 std::string tts_voice_headmaster;
+std::vector<std::string> tts_voiced;
+std::vector<std::string> tts_voiced_models;
+
+bool trace_unknown_voices;
 
 std::string mod_path;
 std::vector<std::string> mod_ext;
@@ -220,22 +224,14 @@ void read_cfg()
   tts_path = config["tts_path"].value_or("");;
   tts_backend = config["tts_backend"].value_or("");
   tts_language = config["tts_language"].value_or("");
-
-  tts_voice_squall = config["tts_voice_squall"].value_or("");
-  tts_voice_zell = config["tts_voice_zell"].value_or("");
-  tts_voice_irvine = config["tts_voice_irvine"].value_or("");
-  tts_voice_quistis = config["tts_voice_quistis"].value_or("");
-  tts_voice_rinoa = config["tts_voice_rinoa"].value_or("");
-  tts_voice_selphie = config["tts_voice_selphie"].value_or("");
-  tts_voice_seifer = config["tts_voice_seifer"].value_or("");
-  tts_voice_edea = config["tts_voice_edea"].value_or("");
-  tts_voice_laguna = config["tts_voice_laguna"].value_or("");
-  tts_voice_kiros = config["tts_voice_kiros"].value_or("");
-  tts_voice_ward = config["tts_voice_ward"].value_or("");
   tts_voice_other = config["tts_voice_other"].value_or("");
-  tts_voice_headmaster = config["tts_voice_headmaster"].value_or("");
 
   
+
+  tts_voiced = get_string_or_array_of_strings(config["tts_voiced"]);
+  tts_voiced_models = get_string_or_array_of_strings(config["tts_voiced_models"]);
+
+
 
 	mod_path = config["mod_path"].value_or("");
 	mod_ext = get_string_or_array_of_strings(config["mod_ext"]);
@@ -267,6 +263,7 @@ void read_cfg()
 	save_textures_legacy = config["save_textures_legacy"].value_or(false);
 	save_exe_data = config["save_exe_data"].value_or(false);
 	trace_all = config["trace_all"].value_or(false);
+  trace_unknown_voices = config["trace_unknown_voices"].value_or(false);
 	trace_renderer = config["trace_renderer"].value_or(false);
 	trace_movies = config["trace_movies"].value_or(false);
 	trace_music = config["trace_music"].value_or(false);

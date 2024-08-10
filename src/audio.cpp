@@ -1147,6 +1147,7 @@ void NxAudioEngine::stopVoice(int slot, double time)
 	else
 	{
 		_engine.stop(handle);
+    if(_currentVoice[slot].stream) _currentVoice[slot].stream->~VGMStream(); //added to close the audio file handle, and stop hogging memory
 	}
 }
 

@@ -637,29 +637,14 @@ bool isVoiced(std::string character, std::string& voiceModel)
     }
   }
 
-  std::map<std::string, std::string> ff8_char_voices =
-  {
-    {"squall", tts_voice_squall},
-    {"zell", tts_voice_zell},
-    {"irvine", tts_voice_irvine},
-    {"quistis", tts_voice_quistis},
-    {"rinoa", tts_voice_rinoa},
-    {"selphie", tts_voice_selphie},
-    {"seifer", tts_voice_seifer},
-    {"edea", tts_voice_edea},
-    {"laguna", tts_voice_laguna},
-    {"kiros", tts_voice_kiros},
-    {"ward", tts_voice_ward },
-    {"gsoldier", tts_voice_ward },
-    {"headmaster", tts_voice_headmaster}
-  };
-
-  auto it = ff8_char_voices.find(character);
-  if (it != ff8_char_voices.end()) {
-    if (trace_tts) ffnx_trace("TTS: loaded voice model: %s (%s)\n", it->second.c_str(), character.c_str());
-
-    voiceModel = it->second;
-    return true;
+  auto it = std::find(tts_voiced.begin(), tts_voiced.end(), character);
+  if (it != tts_voiced.end()) {
+    int index = std::distance(tts_voiced.begin(), it);
+    if (index >= 0 && index < tts_voiced_models.size()) {
+      if (trace_tts) ffnx_trace("TTS: loaded voice model: %s (%s)\n", tts_voiced_models[index].c_str(), character.c_str());
+      voiceModel = tts_voiced_models[index];
+      return true;
+    }
   }
 
   if (trace_tts) ffnx_trace("TTS: %s not voiced\n", character.c_str());
@@ -704,7 +689,7 @@ void split_dialogue(std::string decoded_text, std::string& name, std::string& me
     if ((current_char >= ' ' && current_char <= '}') || (current_char == 0xe2 && charLength == 3))
     {
 
-      if (!gotName && current_char == 0xe2) //quote start
+      if (!gotName && current_char == 0xe2) //quote start, meaning the name as finished, or its unnamed
       {
         if (name.empty())
         {
@@ -725,12 +710,18 @@ void split_dialogue(std::string decoded_text, std::string& name, std::string& me
       }
       else
       {
-        if (current_char == '"') current_char = '\'';
-        else if (last_char == '.' && current_char == '.')
+        if (current_char == '"' && charLength == 1)
+        {
+          last_char = current_char;
+          std::advance(it, charLength);
+          continue; //make sure we cant escape the json
+        }
+
+        if (last_char == '.' && current_char == '.') //replace ... with space (makes tts sounds better)
         {
           if(gotName) message += " ";
         }
-        else if (last_char == '.' && current_char != ' ' && charLength == 1)
+        else if (last_char == '.' && current_char != ' ' && charLength == 1) //ensure a space after .
         {
           if (gotName)
           {
@@ -739,7 +730,7 @@ void split_dialogue(std::string decoded_text, std::string& name, std::string& me
             message += current_char;
           }
         }
-        else if (current_char == '.')
+        else if (current_char == '.') //replace . with , (makes tts sounds better)
         {
           if (gotName) message += ",";
         }
@@ -759,7 +750,7 @@ void split_dialogue(std::string decoded_text, std::string& name, std::string& me
     std::advance(it, charLength);
   }
 
-  if (message.empty())
+  if (message.empty()) //there was likely no name in the dialogue
   {
     message = name;
     voiceModel = tts_voice_other;
@@ -1449,7 +1440,7 @@ bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
 
   if (!tts_enable_unknown_voices && tts_name == "Unknown")
   {
-    ffnx_trace("TTS: not voicing unknown character %s \n", unvoiced.c_str());
+    if(trace_unknown_voices) ffnx_trace("TTS: not voicing unknown character %s \n", unvoiced.c_str());
     return false;
   }
 
