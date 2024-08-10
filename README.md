@@ -31,6 +31,6 @@ If you want to build this then check the instructions at [FFNx](https://github.c
 ```
 mkdir localai
 cd localai
-docker run --restart=always -ti -v $PWD/models:/build/models --name local-ai -p 8693:8080 --gpus all -d localai/localai:latest-aio-gpu-nvidia-cuda-12
+docker run -ti -v $PWD/models:/build/models --name local-ai -p 8693:8080 --gpus all localai/localai:latest-aio-gpu-nvidia-cuda-12
 ```
 - After the server is running, copy all the voice models from the release to localai/models
