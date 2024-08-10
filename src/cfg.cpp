@@ -34,22 +34,9 @@ int tts_backend_port;
 std::string tts_path;
 std::string tts_backend;
 std::string tts_language;
-std::string tts_voice_squall;
-std::string tts_voice_zell;
-std::string tts_voice_irvine;
-std::string tts_voice_quistis;
-std::string tts_voice_rinoa ;
-std::string tts_voice_selphie;
-std::string tts_voice_seifer;
-std::string tts_voice_edea;
-std::string tts_voice_laguna;
-std::string tts_voice_kiros;
-std::string tts_voice_ward;
 std::string tts_voice_other;
-std::string tts_voice_headmaster;
 std::vector<std::string> tts_voiced;
 std::vector<std::string> tts_voiced_models;
-
 bool trace_unknown_voices;
 
 std::string mod_path;
