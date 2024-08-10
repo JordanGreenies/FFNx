@@ -26,23 +26,14 @@ tts_path = "/tts"
 tts_backend = "piper"
 tts_language = "en-us"
 
-tts_voice_squall = "ff8/Squall.onnx"
-tts_voice_zell = "ff8/Zell.onnx"
-tts_voice_irvine = "ff8/Irvine.onnx"
-tts_voice_quistis = "ff8/Quistis.onnx"
-tts_voice_rinoa = "ff8/Rinoa.onnx"
-tts_voice_selphie = "ff8/Selphie.onnx"
-tts_voice_seifer = "ff8/Seifer.onnx"
-tts_voice_edea = "ff8/Edea.onnx"
-tts_voice_laguna = "ff8/Laguna.onnx"
-tts_voice_kiros = "ff8/Kiros.onnx"
-tts_voice_ward = "ff8/Ward.onnx"
-tts_voice_headmaster = "ff8/Headmaster.onnx"
+tts_voiced = ["squall", "zell", "irvine", "quistis", "rinoa", "selphie", "seifer", "edea", "laguna", "kiros", "ward", "headmaster", "gsoldier"]
+tts_voiced_models = ["ff8/Squall.onnx", "ff8/Zell.onnx", "ff8/Irvine.onnx", "ff8/Quistis.onnx", "ff8/Rinoa.onnx", "ff8/Selphie.onnx", "ff8/Seifer.onnx", "ff8/Edea.onnx","ff8/Laguna.onnx", "ff8/Kiros.onnx", "ff8/Ward.onnx", "ff8/Headmaster.onnx", "ff8/Ward.onnx" ]
 
 tts_enable_unknown_voices = true
 tts_voice_other = "ff8/Unknown.onnx"
 
 trace_tts = false
+trace_unknown_voices = true
 ```
 
 ## Limitations:
