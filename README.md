@@ -41,6 +41,7 @@ trace_unknown_voices = true
 ## Limitations:
 - SSL connections not implemented
 - Speaking actor names are extracted from the dialogue & might not always be accurate, in which case it selects the Unknown voice model
+- Slower computers, connections or big voice models might have delay before the dialogue
 
 ## Notes:
 - If you have problems, enable trace_tts and check FFNx.log when dialogue occurs
