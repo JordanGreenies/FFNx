@@ -1046,8 +1046,6 @@ bool NxAudioEngine::canPlayVoice(const char* name)
 
 bool NxAudioEngine::playVoice(const char* name, int slot, float volume)
 {
-  printf("NxAudioEngine::playVoice \n");
-
 	char filename[MAX_PATH];
 
 	bool exists = false;
