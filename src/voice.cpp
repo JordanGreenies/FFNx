@@ -1372,14 +1372,14 @@ private:
     if (bytesReceived < 0) {
       if (trace_tts) ffnx_trace("TTS: error getting response from TTS server \n");
     }
-
-    if (trace_tts) ffnx_trace("TTS: response success, %i bytes \n", response.size());
+    else if (trace_tts) ffnx_trace("TTS: response success, %i bytes \n", response.size());
 
     return response;
   }
 
 };
 
+HttpClient http_tts;
 
 bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
 {
@@ -1455,17 +1455,21 @@ bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
 
   if (!soundFileExists && !tts_dialogue.empty())
   {
-    HttpClient client;
     std::string response;
     std::string payload = "{\"backend\": \"" + tts_backend + "\", \"input\" : \"" + tts_dialogue + "\", \"language\" : \"" + tts_language + "\", \"model\" : \"" + voice_model + "\"}";
     if (trace_tts) ffnx_trace("TTS: request JSON, %s \n", payload.c_str());
-    client.post(tts_backend_ip.c_str(), tts_backend_port, tts_path.c_str(), payload.c_str(), response);
+    http_tts.post(tts_backend_ip.c_str(), tts_backend_port, tts_path.c_str(), payload.c_str(), response);
     std::filesystem::create_directories(std::filesystem::path(folderfilename).parent_path());
     std::fstream file;
     file.open(folderfilename, std::ios::app | std::ios::binary);
-    file.write(response.c_str(), response.length());
-    file.close();
-    if (trace_tts) ffnx_trace("TTS: sound file created: %s (%ibytes) \n", folderfilename, response.length());
+
+    if(file.is_open())
+    {
+      file.write(response.c_str(), response.length());
+      file.close();
+      if (trace_tts) ffnx_trace("TTS: sound file created: %s (%ibytes) \n", folderfilename, response.length());
+    }
+    else if (trace_tts) ffnx_trace("TTS: failed to create file: %s \n", folderfilename);
   }
 
   return true;
