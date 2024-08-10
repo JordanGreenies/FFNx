@@ -49,6 +49,7 @@ trace_unknown_voices = true
 - I have only tested TTS with piper, clips are generated in around ~0.15s from a local server, other backends or AI generation might take longer which would result in a delay before the dialogue
 - If a sound clip already exists, a TTS clip will not be created, so it can work with other voice mods such as the [echo-s-8](https://www.tsunamods.com/echo-s-8/) demo, without effecting them
 - Standard voice models for [piper](https://github.com/rhasspy/piper) can be found [here](https://github.com/rhasspy/piper/blob/master/VOICES.md) or [here](https://huggingface.co/rhasspy/piper-voices/tree/main)
+- [Here](https://ssamjh.nz/create-custom-piper-tts-voice/) is a tutorial on how to create custom voice models
 
 ## TTS server tutorial (docker)
 - You can quickly start a docker tts server with the following commands (with GPU, check [LocalAI](https://github.com/mudler/LocalAI) for cpu instructions):
