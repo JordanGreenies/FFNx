@@ -26,8 +26,6 @@ tts_path = "/tts"
 tts_backend = "piper"
 tts_language = "en-us"
 
-# JSON request example: {\"backend\": \""+ tts_backend +"\", \"input\" : \""+ tokenized_dialogue +"\", \"language\" : \""+ tts_language +"\", \"model\" : \""+ voice_model +"\"}
-
 tts_voice_squall = "ff8/Squall.onnx"
 tts_voice_zell = "ff8/Zell.onnx"
 tts_voice_irvine = "ff8/Irvine.onnx"
