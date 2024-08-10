@@ -16,6 +16,37 @@ If you want to build this then check the instructions at [FFNx](https://github.c
 - Edit FFNx.toml (TTS-VOICEMOD section) to add your server and voice model settings
 - Start game
 
+New FFNx.toml config options:
+```
+tts_enabled = true
+
+tts_backend_ip = "192.168.1.227"
+tts_backend_port = 8693
+tts_path = "/tts"
+tts_backend = "piper"
+tts_language = "en-us"
+
+# JSON request example: {\"backend\": \""+ tts_backend +"\", \"input\" : \""+ tokenized_dialogue +"\", \"language\" : \""+ tts_language +"\", \"model\" : \""+ voice_model +"\"}
+
+tts_voice_squall = "ff8/Squall.onnx"
+tts_voice_zell = "ff8/Zell.onnx"
+tts_voice_irvine = "ff8/Irvine.onnx"
+tts_voice_quistis = "ff8/Quistis.onnx"
+tts_voice_rinoa = "ff8/Rinoa.onnx"
+tts_voice_selphie = "ff8/Selphie.onnx"
+tts_voice_seifer = "ff8/Seifer.onnx"
+tts_voice_edea = "ff8/Edea.onnx"
+tts_voice_laguna = "ff8/Laguna.onnx"
+tts_voice_kiros = "ff8/Kiros.onnx"
+tts_voice_ward = "ff8/Ward.onnx"
+tts_voice_headmaster = "ff8/Headmaster.onnx"
+
+tts_enable_unknown_voices = true
+tts_voice_other = "ff8/Unknown.onnx"
+
+trace_tts = false
+```
+
 ## Limitations:
 - SSL connections not implemented
 - Speaking actor names are extracted from the dialogue & might not always be accurate, in which case it selects the Unknown voice model
