@@ -42,7 +42,6 @@ static const std::vector<std::string> ff8_table = {
   "{EC}","{s }","{ar}","{FE}","{ S}","{ag}"
 };
 
-
 static const std::vector<std::string> ff8_names = {
 	"Squall",
   "Zell",
@@ -112,7 +111,6 @@ std::string ff8_decode_text(const char* encoded_text)
       ret.append(ff8_table[current_char - 0x20]);
     }
   }
-
 
   return ret;
 }
