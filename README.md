@@ -1,4 +1,4 @@
-Fork of [FFNx](https://github.com/julianxhokaxhiu/FFNx) to add TTS support to FF8 from a TTS http server
+Fork of [FFNx](https://github.com/julianxhokaxhiu/FFNx) to add realtime TTS support to FF8 from a TTS http server
 
 https://github.com/user-attachments/assets/11dab1b9-e84f-420b-a4fc-0c52066ce825
 
