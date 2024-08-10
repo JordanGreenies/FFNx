@@ -13,7 +13,7 @@ If you want to build this then check the instructions at [FFNx](https://github.c
 
 ## Instructions for use:
 - Replace AF3DN.P1 and FFNx.toml
-- Edit FFNx.toml (TTS-VOICEMOD section) to add you server and voice model paths
+- Edit FFNx.toml (TTS-VOICEMOD section) to add your server and voice model settings
 - Start game
 
 ## Limitations:
@@ -25,3 +25,12 @@ If you want to build this then check the instructions at [FFNx](https://github.c
 - The TTS voice clips are generated in real-time and are saved locally (FINAL FANTASY VIII/voice)
 - The TTS results are not always perfect, but they are funny and it beats reading right?
 - I have only tested TTS with piper, clips are generated in around ~0.15s from a local server, other backends or AI generation might take longer which would result in a delay before the dialogue
+
+## TTS server tutorial (docker)
+- You can quickly start a docker tts server with the following commands (with GPU, check [LocalAI](https://github.com/mudler/LocalAI) for cpu instructions):
+```
+mkdir localai
+cd localai
+docker run --restart=always -ti -v $PWD/models:/build/models --name local-ai -p 8693:8080 --gpus all -d localai/localai:latest-aio-gpu-nvidia-cuda-12
+```
+- After the server is running, copy all the voice models from the release to localai/models
