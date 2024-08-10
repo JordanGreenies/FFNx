@@ -687,8 +687,6 @@ size_t getUtf8CharLength(unsigned char firstByte) {
 void split_dialogue(std::string decoded_text, std::string& name, std::string& message, std::string& voiceModel, std::string& unvoiced)
 {
   transform(decoded_text.begin(), decoded_text.end(), decoded_text.begin(), tolower);
-  std::string utf8_start_quote = "“";
-  std::string utf8_end_quote = "”";
 
   bool gotName = false;
   unsigned char last_char = 0;
