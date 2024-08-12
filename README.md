@@ -4,7 +4,7 @@ https://github.com/user-attachments/assets/11dab1b9-e84f-420b-a4fc-0c52066ce825
 
 https://github.com/user-attachments/assets/dea5d7a6-7d67-46dc-abae-fa227e5c2242
 
-https://github.com/user-attachments/assets/61e50fef-9c02-4bc8-9f99-d04b31541320
+https://github.com/user-attachments/assets/1b68aec1-124c-4f20-aa37-de62ba96237e
 
 If you want to build this then check the instructions at [FFNx](https://github.com/julianxhokaxhiu/FFNx).
 
