@@ -26,10 +26,11 @@ tts_path = "/tts"
 tts_backend = "piper"
 tts_language = "en-us"
 
-#First names and lowercase only
-tts_voiced = ["squall", "zell", "irvine", "quistis", "rinoa", "selphie", "seifer", "edea", "laguna", "kiros", "ward", "headmaster", "gsoldier", "wedge", "biggs"]
-#In the same order as tts_voiced
-tts_voiced_models = ["ff8/Squall.onnx", "ff8/Zell.onnx", "ff8/Irvine.onnx", "ff8/Quistis.onnx", "ff8/Rinoa.onnx", "ff8/Selphie.onnx", "ff8/Seifer.onnx", "ff8/Edea.onnx","ff8/Laguna.onnx", "ff8/Kiros.onnx", "ff8/Ward.onnx", "ff8/Headmaster.onnx", "ff8/Ward.onnx", "ff8/Kiros.onnx", "ff8/Ward.onnx" ]
+tts_ff8_voiced = ["squall", "zell", "irvine", "quistis", "rinoa", "selphie", "seifer", "edea", "laguna", "kiros", "ward", "headmaster", "gsoldier", "wedge", "biggs"]
+tts_ff8_voiced_models = ["ff8/Squall.onnx", "ff8/Zell.onnx", "ff8/Irvine.onnx", "ff8/Quistis.onnx", "ff8/Rinoa.onnx", "ff8/Selphie.onnx", "ff8/Seifer.onnx", "ff8/Edea.onnx","ff8/Laguna.onnx", "ff8/Kiros.onnx", "ff8/Ward.onnx", "ff8/Headmaster.onnx", "ff8/Ward.onnx", "ff8/Kiros.onnx", "ff8/Ward.onnx" ]
+
+tts_ff7_voiced = ["cloud", "aerith", "barret", "cait", "cid", "jenova", "red", "sephiroth", "tifa", "vincent", "yuffie", "zack" ]
+tts_ff7_voiced_models = ["ff7/Cloud.onnx", "ff7/Aerith.onnx", "ff7/Barret.onnx", "ff7/Cait.onnx", "ff7/Cid.onnx", "ff7/Jenova.onnx", "ff7/Red.onnx", "ff7/Sephiroth.onnx", "ff7/Tifa.onnx", "ff7/Vincent.onnx", "ff7/Yuffie.onnx", "ff7/Zack.onnx", ]
 
 tts_enable_unknown_voices = true
 tts_voice_other = "ff8/Unknown.onnx"
