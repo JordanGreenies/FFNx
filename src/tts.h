@@ -352,7 +352,7 @@ public:
     std::string file_name = get_voice_filename((char*)field_name, window_id, dialog_id, page_count);
     bool soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, file_name.c_str(), NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
 
-    if (!tts_enable_unknown_voices && tts_name == "Unknown")
+    if (tts_enable_unknown_voices && tts_name == "Unknown")
     {
       if (trace_unknown_voices) ffnx_trace("TTS: not voicing unknown character %s \n", unvoiced.c_str());
       return false;
