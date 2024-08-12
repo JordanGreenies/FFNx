@@ -7,7 +7,7 @@ https://github.com/user-attachments/assets/dea5d7a6-7d67-46dc-abae-fa227e5c2242
 If you want to build this then check the instructions at [FFNx](https://github.com/julianxhokaxhiu/FFNx).
 
 ## Prerequisites:
-- FF8 Installed on steam with FFNx
+- FF7/FF8 Installed on steam with FFNx
 - A locally hosted TTS server, for example: [LocalAI](https://github.com/mudler/LocalAI)
 - Enough voice models for each character, all examples included in the release
 
