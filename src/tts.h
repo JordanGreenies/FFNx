@@ -133,13 +133,28 @@ private:
       }
     }
 
-    auto it = std::find(tts_voiced.begin(), tts_voiced.end(), character);
-    if (it != tts_voiced.end()) {
-      int index = std::distance(tts_voiced.begin(), it);
-      if (index >= 0 && index < tts_voiced_models.size()) {
-        if (trace_tts) ffnx_trace("TTS: loaded voice model: %s (%s)\n", tts_voiced_models[index].c_str(), character.c_str());
-        voiceModel = tts_voiced_models[index];
-        return true;
+    if (ff8)
+    {
+      auto it = std::find(tts_ff8_voiced.begin(), tts_ff8_voiced.end(), character);
+      if (it != tts_ff8_voiced.end()) {
+        int index = std::distance(tts_ff8_voiced.begin(), it);
+        if (index >= 0 && index < tts_ff8_voiced_models.size()) {
+          if (trace_tts) ffnx_trace("TTS: loaded voice model: %s (%s)\n", tts_ff8_voiced_models[index].c_str(), character.c_str());
+          voiceModel = tts_ff8_voiced_models[index];
+          return true;
+        }
+      }
+    }
+    else
+    {
+      auto it = std::find(tts_ff7_voiced.begin(), tts_ff7_voiced.end(), character);
+      if (it != tts_ff7_voiced.end()) {
+        int index = std::distance(tts_ff7_voiced.begin(), it);
+        if (index >= 0 && index < tts_ff7_voiced_models.size()) {
+          if (trace_tts) ffnx_trace("TTS: loaded voice model: %s (%s)\n", tts_ff7_voiced_models[index].c_str(), character.c_str());
+          voiceModel = tts_ff7_voiced_models[index];
+          return true;
+        }
       }
     }
 
@@ -165,11 +180,44 @@ private:
     return 0; // Invalid UTF-8 byte sequence
   }
 
-  void split_dialogue(std::string decoded_text, std::string& name, std::string& message, std::string& voiceModel, std::string& unvoiced)
+  std::string get_field_dialog_char_name(byte window_id) {
+    byte id = *(byte*)ff7_externals.current_dialog_string_pointer[window_id];
+
+    switch (id) {
+    case 0xEA: // CLOUD
+      return "cloud";
+    case 0xEB: // BARRET
+      return "barret";
+    case 0xEC: // TIFA
+      return "tifa";
+    case 0xED: // AERITH
+      return "aerith";
+    case 0xEE: // RED XIII
+      return "red";
+    case 0xEF: // YUFFIE
+      return "yuffie";
+    case 0xF0: // CAIT SITH
+      return "cait";
+    case 0xF1: // VINCENT
+      return "vincent";
+    case 0xF2: // CID
+      return "cid";
+    default:
+      return "";
+    }
+  }
+
+  void split_dialogue(std::string decoded_text, std::string& name, std::string& message, std::string& voiceModel, std::string& unvoiced, byte window_id = 0)
   {
     transform(decoded_text.begin(), decoded_text.end(), decoded_text.begin(), tolower);
 
     bool gotName = false;
+    if (!ff8)
+    {
+      name = get_field_dialog_char_name(window_id);
+      if (!name.empty() && isVoiced(name, voiceModel)) gotName = true;
+    }
+
     unsigned char last_char = 0;
     for (auto it = decoded_text.begin(); it != decoded_text.end(); )
     {
@@ -182,68 +230,63 @@ private:
 
       std::string utf8Char(it, it + charLength);
 
-      if ((current_char >= ' ' && current_char <= '}') || (current_char == 0xe2 && charLength == 3))
+      unsigned char new_char = current_char;
+      if (current_char < ' ' || current_char > '}') new_char = ' ';
+      if (current_char == '!' || current_char == '-' || current_char == '.') new_char = ' ';
+
+      if (!gotName && (current_char == 0xe2 || current_char == 0xf2)) //quote start, meaning the name as finished, or its unnamed
       {
-
-        if (!gotName && current_char == 0xe2) //quote start, meaning the name as finished, or its unnamed
+        if (name.empty())
         {
-          if (name.empty())
-          {
-            voiceModel = tts_voice_other;
-            name = "Unknown";
-          }
-          else
-          {
-            name.pop_back();
-            if (!isVoiced(name, voiceModel))
-            {
-              unvoiced = name;
-              name = "Unknown";
-            }
-          }
-
-          gotName = true;
+          voiceModel = tts_voice_other;
+          name = "Unknown";
         }
         else
         {
-          if (current_char == '"' && charLength == 1)
+          if(ff8) name.pop_back();
+          if (!isVoiced(name, voiceModel))
           {
-            last_char = current_char;
-            std::advance(it, charLength);
-            continue; //make sure we cant escape the json
-          }
-
-          if (last_char == '.' && current_char == '.') //replace ... with space (makes tts sounds better)
-          {
-            if (gotName) message += " ";
-          }
-          else if (last_char == '.' && current_char != ' ' && charLength == 1) //ensure a space after .
-          {
-            if (gotName)
-            {
-              message += " ";
-              message += ",";
-              message += current_char;
-            }
-          }
-          else if (current_char == '.') //replace . with , (makes tts sounds better)
-          {
-            if (gotName) message += ",";
-          }
-          else if (gotName && current_char == 0xe2) //quote end or next segment, add a space incase
-          {
-            if (gotName) message += " ";
-          }
-          else if (charLength == 1)
-          {
-            if (!gotName) name += current_char;
-            else message += current_char;
+            unvoiced = name;
+            name = "Unknown";
           }
         }
+
+        gotName = true;
       }
+      else
+      {
+        if (current_char == '"' && charLength == 1)
+        {
+          last_char = current_char;
+          if(ff8) std::advance(it, charLength);
+          else  std::advance(it, 1);
+          continue; //make sure we cant escape the json
+        }
+
+        if (last_char == '.' && current_char == '.') //replace ... with space (makes tts sounds better)
+        {
+          if (gotName) message += " ";
+        }
+        else if (last_char == '.' && current_char != ' ' && charLength == 1) //ensure a space after .
+        {
+          if (gotName)
+          {
+            message += " ";
+            message += ",";
+            message += new_char;
+          }
+        }
+        else
+        {
+          if (!gotName) name += new_char;
+          else message += new_char;
+        }
+      }
+      
 
       last_char = current_char;
-      std::advance(it, charLength);
+      if (ff8) std::advance(it, charLength);
+      else  std::advance(it, 1);
     }
 
     if (message.empty()) //there was likely no name in the dialogue
@@ -272,9 +315,68 @@ private:
     }
     return filename;
   }
+
+  bool request_tts(std::string &tts_dialogue, std::string &voice_model, char* folderfilename)
+  {
+    std::string response;
+    std::string payload = "{\"backend\": \"" + tts_backend + "\", \"input\" : \"" + tts_dialogue + "\", \"language\" : \"" + tts_language + "\", \"model\" : \"" + voice_model + "\"}";
+    if (trace_tts) ffnx_trace("TTS: request JSON, %s \n", payload.c_str());
+    http_tts.post(tts_backend_ip.c_str(), tts_backend_port, tts_path.c_str(), payload.c_str(), response);
+    std::filesystem::create_directories(std::filesystem::path(folderfilename).parent_path());
+    std::fstream file;
+    file.open(folderfilename, std::ios::app | std::ios::binary);
+    if (file.is_open())
+    {
+      file.write(response.c_str(), response.length());
+      file.close();
+      if (trace_tts) ffnx_trace("TTS: sound file created: %s (%ibytes) \n", folderfilename, response.length());
+      return true;
+    }
+    else if (trace_tts) ffnx_trace("TTS: failed to create file: %s \n", folderfilename);
+    return false;
+  }
 public:
 
-  bool tts_create(char* text_data1, int window_id, uint32_t driver_mode)
+  bool tts_create_ff7(const char* text_data1, char* field_name, byte window_id, byte dialog_id, byte page_count)
+  {
+    if (page_count) return false;
+    if (ff7_externals.field_entity_id_list[window_id] != *ff7_externals.current_entity_id) return false;
+    if (ff7_externals.field_entity_id_list[window_id] == 0x0) return false;
+
+    std::string decoded_text = decode_ff7_text(text_data1);
+    std::string tts_dialogue, tts_name, voice_model, unvoiced;
+    split_dialogue(decoded_text, tts_name, tts_dialogue, voice_model, unvoiced, window_id);
+
+    char folderfilename[MAX_PATH] = {};
+
+    std::string file_name = get_voice_filename((char*)field_name, window_id, dialog_id, page_count);
+    bool soundFileExists = nxAudioEngine.getFilenameFullPath(folderfilename, file_name.c_str(), NxAudioEngine::NxAudioEngineLayer::NXAUDIOENGINE_VOICE);
+
+    if (!tts_enable_unknown_voices && tts_name == "Unknown")
+    {
+      if (trace_unknown_voices) ffnx_trace("TTS: not voicing unknown character %s \n", unvoiced.c_str());
+      return false;
+    }
+
+    if (trace_tts)
+    {
+      ffnx_trace("TTS: playing/creating %s \n", folderfilename);
+      ffnx_trace("TTS: tts_name %s \n", tts_name.c_str());
+      ffnx_trace("TTS: tts_dialogue %s \n", tts_dialogue.c_str());
+      ffnx_trace("TTS: decoded_text %s \n", decoded_text.c_str());
+      ffnx_trace("TTS: soundFileExists %i \n", soundFileExists);
+    }
+
+    if (!soundFileExists && !tts_dialogue.empty())
+    {
+      return request_tts(tts_dialogue, voice_model, folderfilename);
+    }
+
+    return soundFileExists;
+  }
+
+
+  bool tts_create_ff8(char* text_data1, int window_id, uint32_t driver_mode)
   {
     std::string decoded_text = ff8_decode_text(text_data1);
     std::string tokenized_dialogue = tokenize_text(decoded_text);
@@ -348,23 +450,9 @@ public:
 
     if (!soundFileExists && !tts_dialogue.empty())
     {
-      std::string response;
-      std::string payload = "{\"backend\": \"" + tts_backend + "\", \"input\" : \"" + tts_dialogue + "\", \"language\" : \"" + tts_language + "\", \"model\" : \"" + voice_model + "\"}";
-      if (trace_tts) ffnx_trace("TTS: request JSON, %s \n", payload.c_str());
-      http_tts.post(tts_backend_ip.c_str(), tts_backend_port, tts_path.c_str(), payload.c_str(), response);
-      std::filesystem::create_directories(std::filesystem::path(folderfilename).parent_path());
-      std::fstream file;
-      file.open(folderfilename, std::ios::app | std::ios::binary);
-
-      if (file.is_open())
-      {
-        file.write(response.c_str(), response.length());
-        file.close();
-        if (trace_tts) ffnx_trace("TTS: sound file created: %s (%ibytes) \n", folderfilename, response.length());
-      }
-      else if (trace_tts) ffnx_trace("TTS: failed to create file: %s \n", folderfilename);
+      return request_tts(tts_dialogue, voice_model, folderfilename);
     }
 
-    return true;
+    return soundFileExists;
   }
 } tts;

@@ -54,8 +54,10 @@ extern std::string tts_language;
 extern bool trace_unknown_voices;
 
 extern std::string tts_voice_other;
-extern std::vector<std::string> tts_voiced;
-extern std::vector<std::string> tts_voiced_models;
+extern std::vector<std::string> tts_ff8_voiced;
+extern std::vector<std::string> tts_ff8_voiced_models;
+extern std::vector<std::string> tts_ff7_voiced;
+extern std::vector<std::string> tts_ff7_voiced_models;
 
 extern std::string mod_path;
 extern std::vector<std::string> mod_ext;

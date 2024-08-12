@@ -35,8 +35,10 @@ std::string tts_path;
 std::string tts_backend;
 std::string tts_language;
 std::string tts_voice_other;
-std::vector<std::string> tts_voiced;
-std::vector<std::string> tts_voiced_models;
+std::vector<std::string> tts_ff8_voiced;
+std::vector<std::string> tts_ff8_voiced_models;
+std::vector<std::string> tts_ff7_voiced;
+std::vector<std::string> tts_ff7_voiced_models;
 bool trace_unknown_voices;
 
 std::string mod_path;
@@ -213,12 +215,11 @@ void read_cfg()
   tts_language = config["tts_language"].value_or("");
   tts_voice_other = config["tts_voice_other"].value_or("");
 
-  
+  tts_ff8_voiced = get_string_or_array_of_strings(config["tts_ff8_voiced"]);
+  tts_ff8_voiced_models = get_string_or_array_of_strings(config["tts_ff8_voiced_models"]);
 
-  tts_voiced = get_string_or_array_of_strings(config["tts_voiced"]);
-  tts_voiced_models = get_string_or_array_of_strings(config["tts_voiced_models"]);
-
-
+  tts_ff7_voiced = get_string_or_array_of_strings(config["tts_ff7_voiced"]);
+  tts_ff7_voiced_models = get_string_or_array_of_strings(config["tts_ff7_voiced_models"]);
 
 	mod_path = config["mod_path"].value_or("");
 	mod_ext = get_string_or_array_of_strings(config["mod_ext"]);

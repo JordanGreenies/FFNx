@@ -180,6 +180,50 @@ bool play_voice(char* field_name, byte window_id, byte dialog_id, byte page_coun
   return nxAudioEngine.playVoice(name.c_str(), window_id, voice_volume);
 }
 
+std::string decode_ff7_text(const char* encoded_text)
+{
+  std::string decoded_text{};
+  int index = 0;
+  char current_char;
+  while (current_char = encoded_text[index++], current_char != char(0xFF))
+  {
+    switch (current_char)
+    {
+    case 0xEB:
+      decoded_text.append("{item_name}");
+      index += 3;
+      break;
+    case 0xEC:
+      decoded_text.append("{number}");
+      index += 3;
+      break;
+    case 0xED:
+      decoded_text.append("{target_name}");
+      index += 3;
+      break;
+    case 0xEE:
+      decoded_text.append("{attack_name}");
+      index += 3;
+      break;
+    case 0xEF:
+      decoded_text.append("{special_number}");
+      index += 3;
+      break;
+    case 0xF0:
+      decoded_text.append("{target_letter}");
+      index += 3;
+      break;
+    case 0xF8:
+      index += 2;
+      break;
+    default:
+      decoded_text.push_back(current_char + 0x20);
+      break;
+    }
+  }
+  return decoded_text;
+}
+
 #include "tts.h"
 
 bool play_battle_dialogue_voice(short enemy_id, std::string tokenized_dialogue)
@@ -417,6 +461,11 @@ int opcode_voice_message()
   }
   else if (_is_dialog_starting || _is_dialog_paging)
   {
+    if (tts_enabled && ff7_externals.current_dialog_string_pointer && ff7_externals.current_dialog_string_pointer[window_id])
+    {
+      tts.tts_create_ff7((const char*)ff7_externals.current_dialog_string_pointer[window_id], field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
+    }
+
     if (_is_dialog_starting) current_opcode_message_status[window_id].char_id = get_field_dialog_char_id(window_id);
     if (trace_all || trace_opcodes) ffnx_trace("opcode[MESSAGE]: field=%s,window_id=%u,dialog_id=%u,paging_id=%u,char=%X\n", field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count, current_opcode_message_status[window_id].char_id);
     current_opcode_message_status[window_id].is_voice_acting = play_voice(field_name, window_id, dialog_id, current_opcode_message_status[window_id].message_page_count);
@@ -580,50 +629,6 @@ int opcode_wm_ask(uint8_t window_id, uint8_t dialog_id, uint8_t first_question_i
 }
 
 // -- BATTLE --
-
-std::string decode_ff7_text(const char* encoded_text)
-{
-  std::string decoded_text{};
-  int index = 0;
-  char current_char;
-  while (current_char = encoded_text[index++], current_char != char(0xFF))
-  {
-    switch (current_char)
-    {
-    case 0xEB:
-      decoded_text.append("{item_name}");
-      index += 3;
-      break;
-    case 0xEC:
-      decoded_text.append("{number}");
-      index += 3;
-      break;
-    case 0xED:
-      decoded_text.append("{target_name}");
-      index += 3;
-      break;
-    case 0xEE:
-      decoded_text.append("{attack_name}");
-      index += 3;
-      break;
-    case 0xEF:
-      decoded_text.append("{special_number}");
-      index += 3;
-      break;
-    case 0xF0:
-      decoded_text.append("{target_letter}");
-      index += 3;
-      break;
-    case 0xF8:
-      index += 2;
-      break;
-    default:
-      decoded_text.push_back(current_char + 0x20);
-      break;
-    }
-  }
-  return decoded_text;
-}
 
 std::string tokenize_text(std::string decoded_text)
 {
@@ -1170,7 +1175,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
         if (ff8_field_window_stack_count[*common_externals.current_field_id] > 1) simulate_OK_disabled[window_id] = true;
       }
-      if (tts_enabled) tts.tts_create(win->text_data1, window_id, mode->driver_mode);
+      if (tts_enabled) tts.tts_create_ff8(win->text_data1, window_id, mode->driver_mode);
     }
     else if (_is_dialog_starting || _is_dialog_paging)
     {
@@ -1214,7 +1219,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
     if (_is_dialog_opening)
     {
-      if (tts_enabled) tts.tts_create(win->text_data1, window_id, mode->driver_mode);
+      if (tts_enabled) tts.tts_create_ff8(win->text_data1, window_id, mode->driver_mode);
       begin_voice(window_id);
     }
     else if (_is_dialog_starting || _has_dialog_text_changed)
@@ -1233,7 +1238,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
     else if (_is_dialog_closing)
     {
       current_opcode_message_status[window_id].is_voice_acting = false;
-      if (tts_enabled) tts.tts_create(win->text_data1, window_id, mode->driver_mode);
+      if (tts_enabled) tts.tts_create_ff8(win->text_data1, window_id, mode->driver_mode);
       end_voice(window_id);
     }
 
@@ -1277,7 +1282,7 @@ int ff8_show_dialog(int window_id, int state, int a3)
 
     if (_is_dialog_opening)
     {
-      if (tts_enabled) tts.tts_create(win->text_data1, window_id, mode->driver_mode);
+      if (tts_enabled) tts.tts_create_ff8(win->text_data1, window_id, mode->driver_mode);
       begin_voice(window_id);
     }
     else if (_is_dialog_starting || _has_dialog_text_changed)
